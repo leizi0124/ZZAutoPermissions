@@ -1,43 +1,28 @@
 /// 获取隐私权限
 #import <Foundation/Foundation.h>
-
+//typedef NS_OPTIONS(NSInteger, zAuthorizationStatus) {
+//    zAuthorizationStatusAuthorized = 0,     //未进行过授权操作
+//    zAuthorizationStatusDenied,             //未授权 可能被限制
+//    zAuthorizationStatusNotDetermined,      //明确拒绝授权
+//    zAuthorizationStatusRestricted,         //已授权
+//};
 @interface ZZAutoPrivacyPers : NSObject
 /**
  获取麦克风权限
  */
-+ (void)getMicrophonePermission;
++ (void)getMicrophonePermission:(void(^)(BOOL result))zzBlock;
 /**
  获取相机权限
  */
-+ (void)getCameraPermission;
++ (void)getCameraPermission:(void(^)(BOOL result))zzBlock;
 /**
  获取相册权限
  */
-+ (void)getPhotoLibraryPermission;
++ (void)getPhotoLibraryPermission:(void(^)(BOOL result))zzBlock;
 /**
  获取通讯录权限
  */
-+ (void)getContactsPermission;
-/**
- 获取蓝牙权限
- */
-+ (void)getBluetoothPermission;
-/**
- 获取语音转文字权限
- */
-+ (void)getSpeechRecognitionPermission;
-/**
- 获取日历权限
- */
-+ (void)getCalendarsPermission;
-/**
- 获取使用时定位权限
- */
-+ (void)getLocationWhenPermission;
-/**
- 获取总是定位权限
- */
-+ (void)getLocationAlwaysPermission;
++ (void)getContactsPermission:(void(^)(BOOL result))zzBlock;
 
 @end
 #pragma mark - 权限说明

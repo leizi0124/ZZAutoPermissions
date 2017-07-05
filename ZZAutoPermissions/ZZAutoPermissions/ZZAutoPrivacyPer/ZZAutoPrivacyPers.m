@@ -8,82 +8,171 @@
 
 #import "ZZAutoPrivacyPers.h"
 #import <Photos/Photos.h>
+#import <AVFoundation/AVFoundation.h>
+#import <AddressBook/AddressBook.h>
+#import <Contacts/Contacts.h>
+#import <AssetsLibrary/AssetsLibrary.h>
 @implementation ZZAutoPrivacyPers
 /**
  获取麦克风权限
  */
-+ (void)getMicrophonePermission {
++ (void)getMicrophonePermission:(void(^)(BOOL result))zzBlock {
     
-}
-/**
- 获取相机权限
- */
-+ (void)getCameraPermission {
-    [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-        if (status == PHAuthorizationStatusAuthorized) {
-            NSLog(@"允许相册");
-        }else{
-            NSLog(@"不允许相册");
+    AVAuthorizationStatus videoAuthStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+    switch (videoAuthStatus) {
+        case AVAuthorizationStatusNotDetermined:{
+            [AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio completionHandler:^(BOOL granted) {
+                if (granted){   // 用户同意授权
+                    zzBlock(YES);
+                }else {         // 用户拒绝授权
+                    zzBlock(NO);
+                }
+            }];
         }
-    }];
-}
-/**
- 获取相册权限
- */
-+ (void)getPhotoLibraryPermission {
-    PHAuthorizationStatus photoAuthorStatus = [PHPhotoLibrary authorizationStatus];
-    switch (photoAuthorStatus) {
-        case PHAuthorizationStatusAuthorized:
-            NSLog(@"允许授权");
             break;
-        case PHAuthorizationStatusDenied:
-            NSLog(@"不允许授权");
+        case AVAuthorizationStatusRestricted:       //未授权
+        case AVAuthorizationStatusDenied:           //未授权
+            zzBlock(NO);
             break;
-        case PHAuthorizationStatusNotDetermined:
-            NSLog(@"不确定");
-            break;
-        case PHAuthorizationStatusRestricted:
-            NSLog(@"限制");
+        case AVAuthorizationStatusAuthorized:       //已授权
+            zzBlock(YES);
             break;
         default:
             break;
     }
 }
 /**
+ 获取相机权限
+ */
++ (void)getCameraPermission:(void(^)(BOOL result))zzBlock {
+    AVAuthorizationStatus authStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+    switch (authStatus) {
+        case AVAuthorizationStatusNotDetermined:{    //未进行过授权操作
+            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+                if (status == PHAuthorizationStatusAuthorized) {
+                    zzBlock(YES);
+                }else{
+                    zzBlock(NO);
+                }
+            }];
+        }
+            break;
+        case ALAuthorizationStatusRestricted:       //未授权
+        case ALAuthorizationStatusDenied:           //未授权
+            zzBlock(NO);
+            break;
+        case ALAuthorizationStatusAuthorized:       //授权
+            zzBlock(YES);
+            break;
+        default:
+            break;
+    }
+}
+/**
+ 获取相册权限
+ */
++ (void)getPhotoLibraryPermission:(void(^)(BOOL result))zzBlock {
+    BOOL needAuth;
+    if (NSFoundationVersionNumber < NSFoundationVersionNumber_iOS_8_0) {
+        ALAuthorizationStatus authStatus = [ALAssetsLibrary authorizationStatus];
+        switch (authStatus) {
+            case ALAuthorizationStatusNotDetermined:    //未进行过授权操作
+                needAuth = YES;
+                break;
+            case ALAuthorizationStatusRestricted:       //未授权
+            case ALAuthorizationStatusDenied:           //未授权
+                zzBlock(NO);
+                break;
+            case ALAuthorizationStatusAuthorized:       //授权
+                zzBlock(YES);
+                break;
+            default:
+                break;
+        }
+    }else {
+        PHAuthorizationStatus authStatus = [PHPhotoLibrary authorizationStatus];
+        
+        switch (authStatus) {
+            case PHAuthorizationStatusAuthorized:       //未进行过授权操作
+                needAuth = YES;
+                break;
+            case PHAuthorizationStatusDenied:           //未授权
+            case PHAuthorizationStatusNotDetermined:    //未授权
+                zzBlock(NO);
+                break;
+            case PHAuthorizationStatusRestricted:       //授权
+                zzBlock(YES);
+                break;
+            default:
+                break;
+        }
+    }
+    
+    if (needAuth) {
+        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+            if (status == PHAuthorizationStatusAuthorized) {
+                zzBlock(YES);
+            }else{
+                zzBlock(NO);
+            }
+        }];
+    }
+}
+/**
  获取通讯录权限
  */
-+ (void)getContactsPermission {
++ (void)getContactsPermission:(void(^)(BOOL result))zzBlock {
     
-}
-/**
- 获取蓝牙权限
- */
-+ (void)getBluetoothPermission {
-    
-}
-/**
- 获取语音转文字权限
- */
-+ (void)getSpeechRecognitionPermission {
-    
-}
-/**
- 获取日历权限
- */
-+ (void)getCalendarsPermission {
-    
-}
-/**
- 获取使用时定位权限
- */
-+ (void)getLocationWhenPermission {
-    
-}
-/**
- 获取总是定位权限
- */
-+ (void)getLocationAlwaysPermission {
-    
+    if (NSFoundationVersionNumber < NSFoundationVersionNumber_iOS_9_0) {
+        ABAuthorizationStatus authStatus = ABAddressBookGetAuthorizationStatus();
+        switch (authStatus) {
+            case kABAuthorizationStatusNotDetermined:{//未进行过授权操作
+                ABAddressBookRef addressBook = ABAddressBookCreateWithOptions(NULL, NULL);
+                ABAddressBookRequestAccessWithCompletion(addressBook, ^(bool granted, CFErrorRef error) {
+                    if (granted) {
+                        zzBlock(YES);
+                        CFRelease(addressBook);
+                    }else{
+                        zzBlock(NO);
+                    }
+                });
+            }
+                break;
+            case kABAuthorizationStatusRestricted://未授权 可能被限制
+            case kABAuthorizationStatusDenied://明确拒绝授权
+                zzBlock(NO);
+                break;
+            case kABAuthorizationStatusAuthorized://已授权
+                zzBlock(YES);
+                break;
+            default:
+                break;
+        }
+    } else {
+        CNAuthorizationStatus authStatus = [CNContactStore authorizationStatusForEntityType:CNEntityTypeContacts];
+        switch (authStatus) {
+            case CNAuthorizationStatusNotDetermined:{//未进行过授权操作
+                CNContactStore *contactStore = [[CNContactStore alloc] init];
+                [contactStore requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError * _Nullable error) {
+                    if (granted) {
+                        zzBlock(YES);
+                    } else {
+                        zzBlock(NO);
+                    }
+                }];
+            }
+                break;
+            case CNAuthorizationStatusRestricted:   //未授权 可能被限制
+            case CNAuthorizationStatusDenied:       //明确拒绝授权
+                zzBlock(NO);
+                break;
+            case CNAuthorizationStatusAuthorized:   //已授权
+                zzBlock(YES);
+                break;
+            default:
+                break;
+        }
+    }
 }
 @end
 //麦克风权限：Privacy - Microphone Usage Description 是否允许此App使用你的麦克风？

@@ -8,8 +8,8 @@
 
 #import "ViewController.h"
 #import "ZZAutoPrivacyPers.h"
-@interface ViewController ()
-
+#import <objc/runtime.h>
+@interface ViewController ()<UITextViewDelegate,UIGestureRecognizerDelegate>
 @end
 
 @implementation ViewController
@@ -17,7 +17,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    NSArray *titleArray = @[@"麦克风",@"相机",@"相册",@"通讯录",@"蓝牙",@"语音识别",@"日历",@"临时定位",@"一直定位"];
+    NSArray *titleArray = @[@"麦克风",@"相机",@"相册",@"通讯录"];
     CGRect frame = CGRectMake(0, 100, self.view.frame.size.width / 4.0, 50);
     for (NSInteger index = 0; index < titleArray.count; index++) {
         UIButton *priBtn = [[UIButton alloc] initWithFrame:frame];
@@ -37,50 +37,46 @@
 - (void)priBtnAction:(UIButton *)sender {
     switch (sender.tag) {
         case 100:{
-            [ZZAutoPrivacyPers getMicrophonePermission];
+            [ZZAutoPrivacyPers getMicrophonePermission:^(BOOL result) {
+                if (result) {
+                    NSLog(@"麦克风 授权 成功");
+                }else {
+                    NSLog(@"麦克风 授权 失败");
+                }
+            }];
         }
             break;
         case 101:{
-            [ZZAutoPrivacyPers getCameraPermission];
+            [ZZAutoPrivacyPers getCameraPermission:^(BOOL result) {
+                if (result) {
+                    NSLog(@"相机 授权 成功");
+                }else {
+                    NSLog(@"相机 授权 失败");
+                }
+            }];
         }
             break;
         case 102:{
-            [ZZAutoPrivacyPers getPhotoLibraryPermission];
+            [ZZAutoPrivacyPers getPhotoLibraryPermission:^(BOOL result) {
+                if (result) {
+                    NSLog(@"相册 授权 成功");
+                }else {
+                    NSLog(@"相册 授权 失败");
+                }
+            }];
         }
             break;
         case 103:{
-            [ZZAutoPrivacyPers getContactsPermission];
+            [ZZAutoPrivacyPers getContactsPermission:^(BOOL result) {
+                if (result) {
+                    NSLog(@"通讯录 授权 成功");
+                }else {
+                    NSLog(@"通讯录 授权 失败");
+                }
+            }];
         }
-            break;
-        case 104:{
-            [ZZAutoPrivacyPers getBluetoothPermission];
-        }
-            break;
-        case 105:{
-            [ZZAutoPrivacyPers getSpeechRecognitionPermission];
-        }
-            break;
-        case 106:{
-            [ZZAutoPrivacyPers getCalendarsPermission];
-        }
-            break;
-        case 107:{
-            [ZZAutoPrivacyPers getLocationWhenPermission];
-        }
-            break;
-        case 108:{
-            [ZZAutoPrivacyPers getLocationAlwaysPermission];
-        }
-            break;
         default:
             break;
     }
 }
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
-
 @end
